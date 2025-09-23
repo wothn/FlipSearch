@@ -1,0 +1,74 @@
+body {
+    width: 250px;
+    margin: 0;
+    padding: 10px;
+    font-family: Arial, sans-serif;
+    background-color: #f5f5f5;
+}
+
+.container {
+    text-align: center;
+}
+
+h3 {
+    margin: 0 0 10px 0;
+    color: #333;
+    font-size: 16px;
+}
+
+.query-info {
+    margin-bottom: 10px;
+    font-size: 12px;
+    color: #666;
+    word-break: break-all;
+}
+
+.engines-list {
+    margin-bottom: 15px;
+    max-height: 250px;
+    overflow-y: auto;
+}
+
+.engine-item {
+    display: flex;
+    align-items: center;
+    padding: 8px;
+    margin: 5px 0;
+    background-color: white;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: background-color 0.2s;
+}
+
+.engine-item:hover {
+    background-color: #e8f4f8;
+}
+
+.engine-icon {
+    width: 20px;
+    height: 20px;
+    margin-right: 8px;
+    object-fit: contain;
+}
+
+.engine-name {
+    flex: 1;
+    font-size: 14px;
+    color: #333;
+}
+
+.options-btn {
+    width: 100%;
+    padding: 8px;
+    background-color: #007cba;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 14px;
+    transition: background-color 0.2s;
+}
+
+.options-btn:hover {
+    background-color: #005a87;
+}
