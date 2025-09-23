@@ -39,10 +39,11 @@ let currentEngine = "";
 
 /**
  * 从URL中提取搜索参数
- * 
+ *
  * 该函数尝试解析给定URL中的搜索关键词和对应的搜索引擎。
  * 首先会检查是否匹配已知搜索引擎的搜索参数，如果没有匹配则尝试通用搜索参数。
- * 
+ * 智能识别站点搜索，如果查询包含 site: 操作符，则只保留实际的搜索词。
+ *
  * @param {string} url - 需要解析的URL地址
  * @returns {Object} 包含engine和query的对象，engine表示搜索引擎标识（未识别时为null），query表示搜索关键词（未识别时为null）
  */
@@ -55,7 +56,16 @@ function extractSearchParamFromUrl(url) {
         for (const [engineKey, engine] of Object.entries(engines)) {
             const paramValue = params.get(engine.searchParam);
             if (paramValue) {
-                return {engine: engineKey, query: decodeURIComponent(paramValue)};
+                let query = decodeURIComponent(paramValue);
+
+                // 检查是否为站点搜索（包含 site: 操作符）
+                const siteMatch = query.match(/site:[^\s]+\s+(.+)/);
+                if (siteMatch) {
+                    // 如果是站点搜索，提取实际的搜索词
+                    return {engine: engineKey, query: siteMatch[1]};
+                }
+
+                return {engine: engineKey, query: query};
             }
         }
 
@@ -64,7 +74,15 @@ function extractSearchParamFromUrl(url) {
         for (const param of commonParams) {
             const paramValue = params.get(param);
             if (paramValue) {
-                return {engine: null, query: decodeURIComponent(paramValue)};
+                let query = decodeURIComponent(paramValue);
+
+                // 检查是否为站点搜索
+                const siteMatch = query.match(/site:[^\s]+\s+(.+)/);
+                if (siteMatch) {
+                    return {engine: null, query: siteMatch[1]};
+                }
+
+                return {engine: null, query: query};
             }
         }
     } catch (e) {
