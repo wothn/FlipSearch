@@ -130,10 +130,7 @@ function renderEngines() {
         const item = document.createElement('div');
         item.className = 'engine-item';
 
-        if (key === currentEngine) {
-            item.style.backgroundColor = '#d0e8f2';
-        }
-
+  
         const img = document.createElement('img');
         img.className = 'engine-icon';
         img.src = engine.icon;
