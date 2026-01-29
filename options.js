@@ -218,12 +218,28 @@ function addEngine() {
     renderEngines();
 }
 
+function resetSettings() {
+    if (confirm('确定要还原到默认设置吗？这将删除所有自定义搜索引擎并恢复默认排序。')) {
+        customEngines = {};
+        engineOrder = Object.keys(defaultEngines);
+        saveEngines();
+        renderEngines();
+        showStatus('已还原为默认设置', 'success');
+    }
+}
+
 document.addEventListener('DOMContentLoaded', function() {
     loadEngines();
-    
+
     // 为添加搜索引擎按钮添加事件监听器
     const addEngineBtn = document.getElementById('add-engine-btn');
     if (addEngineBtn) {
         addEngineBtn.addEventListener('click', addEngine);
+    }
+
+    // 为还原设置按钮添加事件监听器
+    const resetBtn = document.getElementById('reset-btn');
+    if (resetBtn) {
+        resetBtn.addEventListener('click', resetSettings);
     }
 });
