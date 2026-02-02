@@ -44,6 +44,19 @@ h3 {
     background-color: #e8f4f8;
 }
 
+.engine-item.current-engine {
+    background-color: #d4edda;
+    border: 1px solid #28a745;
+    position: relative;
+}
+
+.engine-item.current-engine::after {
+    content: "✓";
+    color: #28a745;
+    font-weight: bold;
+    margin-left: auto;
+}
+
 .engine-icon {
     width: 20px;
     height: 20px;

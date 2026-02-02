@@ -51,21 +51,31 @@ function extractSearchParamFromUrl(url) {
     try {
         const urlObj = new URL(url);
         const params = new URLSearchParams(urlObj.search);
+        const hostname = urlObj.hostname.toLowerCase();
 
-        // 遍历已知搜索引擎配置，检查URL中是否包含对应搜索参数
+        // 首先通过主机名匹配搜索引擎
         for (const [engineKey, engine] of Object.entries(engines)) {
-            const paramValue = params.get(engine.searchParam);
-            if (paramValue) {
-                let query = decodeURIComponent(paramValue);
+            const engineUrlObj = new URL(engine.url);
+            const engineHostname = engineUrlObj.hostname.toLowerCase();
+            const engineDomain = engineHostname.replace(/^www\./, '');
 
-                // 检查是否为站点搜索（包含 site: 操作符）
-                const siteMatch = query.match(/site:[^\s]+\s+(.+)/);
-                if (siteMatch) {
-                    // 如果是站点搜索，提取实际的搜索词
-                    return {engine: engineKey, query: siteMatch[1]};
+            // 检查主机名是否匹配（处理 www 前缀和子域名的情况，如 cn.bing.com）
+            const currentDomain = hostname.replace(/^www\./, '');
+            if (currentDomain === engineDomain || currentDomain.endsWith('.' + engineDomain)) {
+
+                // 主机名匹配，再检查搜索参数
+                const paramValue = params.get(engine.searchParam);
+                if (paramValue) {
+                    let query = decodeURIComponent(paramValue);
+
+                    // 检查是否为站点搜索（包含 site: 操作符）
+                    const siteMatch = query.match(/site:[^\s]+\s+(.+)/);
+                    if (siteMatch) {
+                        return {engine: engineKey, query: siteMatch[1]};
+                    }
+
+                    return {engine: engineKey, query: query};
                 }
-
-                return {engine: engineKey, query: query};
             }
         }
 
@@ -128,7 +138,12 @@ function renderEngines() {
 
     Object.entries(engines).forEach(([key, engine]) => {
         const item = document.createElement('div');
-        item.className = 'engine-item';
+        // 标记当前所在的搜索引擎
+        if (key === currentEngine) {
+            item.className = 'engine-item current-engine';
+        } else {
+            item.className = 'engine-item';
+        }
 
   
         const img = document.createElement('img');
