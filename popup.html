@@ -1,25 +1,31 @@
-<!DOCTYPE html>
+<!doctype html>
 <html>
-<head>
-    <meta charset="utf-8">
-    <title>搜索引擎切换器</title>
-    <link rel="stylesheet" href="popup.css">
-</head>
-<body>
-    <div class="container">
-        <div id="query-display" class="query-info">
-            <span id="query-text"></span>
-            <input type="text" id="query-input" class="query-input" style="display: none;">
+    <head>
+        <meta charset="utf-8" />
+        <title>搜索引擎切换器</title>
+        <link rel="stylesheet" href="popup.css" />
+    </head>
+    <body>
+        <div class="container">
+            <div id="query-display" class="query-info">
+                <span id="query-text"></span>
+                <input
+                    type="text"
+                    id="query-input"
+                    class="query-input"
+                    style="display: none"
+                />
+            </div>
+            <div id="engines-container" class="engines-list"></div>
+            <div class="new-tab-option">
+                <label>
+                    <input type="checkbox" id="new-tab-checkbox" />
+                    在新标签页打开
+                </label>
+            </div>
+            <button id="options-btn" class="options-btn">设置</button>
         </div>
-        <div id="engines-container" class="engines-list"></div>
-        <div class="new-tab-option">
-            <label>
-                <input type="checkbox" id="new-tab-checkbox">
-                在新标签页打开
-            </label>
-        </div>
-        <button id="options-btn" class="options-btn">设置</button>
-    </div>
-    <script src="popup.js"></script>
-</body>
+        <script src="common.js"></script>
+        <script src="popup.js"></script>
+    </body>
 </html>
