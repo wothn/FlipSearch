@@ -104,10 +104,10 @@ function extractSearchParamFromUrl(url) {
 
 /**
  * 提取当前活动标签页中的搜索查询参数
- * 
+ *
  * 该函数通过Chrome扩展API获取当前活动的标签页，分析其URL以提取搜索关键词和搜索引擎信息，
  * 并更新用户界面显示当前搜索状态。
- * 
+ *
  * @returns {void} 无返回值
  */
 function extractSearchQuery() {
@@ -120,17 +120,76 @@ function extractSearchQuery() {
             currentEngine = result.engine;
 
             // 更新页面中显示当前搜索查询的元素
-            const queryDiv = document.getElementById('current-query');
-            if (currentQuery) {
-                queryDiv.textContent = `当前搜索: ${currentQuery}`;
-            } else {
-                queryDiv.textContent = "当前未在搜索";
-            }
+            updateQueryDisplay();
 
             // 渲染搜索引擎列表
             renderEngines();
         }
     });
+}
+
+/**
+ * 更新搜索词显示
+ */
+function updateQueryDisplay() {
+    const queryText = document.getElementById('query-text');
+    const queryInput = document.getElementById('query-input');
+
+    if (currentQuery) {
+        queryText.textContent = `当前搜索: ${currentQuery}`;
+    } else {
+        queryText.textContent = "当前未在搜索";
+    }
+}
+
+/**
+ * 切换到编辑模式
+ */
+function enableQueryEdit() {
+    if (!currentQuery) return;
+
+    const queryDisplay = document.getElementById('query-display');
+    const queryText = document.getElementById('query-text');
+    const queryInput = document.getElementById('query-input');
+
+    queryDisplay.classList.add('editing');
+    queryText.style.display = 'none';
+    queryInput.style.display = 'block';
+    queryInput.value = currentQuery;
+    queryInput.focus();
+    queryInput.select();
+}
+
+/**
+ * 保存编辑后的搜索词
+ */
+function saveQueryEdit() {
+    const queryDisplay = document.getElementById('query-display');
+    const queryText = document.getElementById('query-text');
+    const queryInput = document.getElementById('query-input');
+
+    const newQuery = queryInput.value.trim();
+    if (newQuery) {
+        currentQuery = newQuery;
+    }
+
+    queryDisplay.classList.remove('editing');
+    queryInput.style.display = 'none';
+    queryText.style.display = 'inline';
+    updateQueryDisplay();
+}
+
+/**
+ * 取消编辑
+ */
+function cancelQueryEdit() {
+    const queryDisplay = document.getElementById('query-display');
+    const queryText = document.getElementById('query-text');
+    const queryInput = document.getElementById('query-input');
+
+    queryDisplay.classList.remove('editing');
+    queryInput.style.display = 'none';
+    queryText.style.display = 'inline';
 }
 
 function renderEngines() {
@@ -224,4 +283,29 @@ document.addEventListener('DOMContentLoaded', function() {
             chrome.storage.sync.set({openInNewTab: openInNewTab});
         });
     }
+
+    // 搜索词编辑功能
+    const queryDisplay = document.getElementById('query-display');
+    const queryInput = document.getElementById('query-input');
+
+    // 点击搜索词区域进入编辑模式
+    queryDisplay.addEventListener('click', function(e) {
+        if (e.target !== queryInput && queryInput.style.display === 'none') {
+            enableQueryEdit();
+        }
+    });
+
+    // 输入框回车保存
+    queryInput.addEventListener('keydown', function(e) {
+        if (e.key === 'Enter') {
+            saveQueryEdit();
+        } else if (e.key === 'Escape') {
+            cancelQueryEdit();
+        }
+    });
+
+    // 输入框失去焦点时保存
+    queryInput.addEventListener('blur', function() {
+        saveQueryEdit();
+    });
 });

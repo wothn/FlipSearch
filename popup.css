@@ -21,6 +21,35 @@ h3 {
     font-size: 12px;
     color: #666;
     word-break: break-all;
+    cursor: pointer;
+    padding: 6px 8px;
+    background-color: #fff;
+    border-radius: 4px;
+    border: 1px solid transparent;
+    transition: border-color 0.2s, background-color 0.2s;
+}
+
+.query-info:hover {
+    border-color: #007cba;
+    background-color: #f0f8ff;
+}
+
+.query-info.editing {
+    padding: 4px;
+}
+
+.query-input {
+    width: 100%;
+    padding: 4px 6px;
+    font-size: 12px;
+    border: 1px solid #007cba;
+    border-radius: 3px;
+    outline: none;
+    box-sizing: border-box;
+}
+
+.query-input:focus {
+    border-color: #005a87;
 }
 
 .engines-list {
