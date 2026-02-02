@@ -184,6 +184,21 @@ function removeEngine(engineKey) {
     renderEngines();
 }
 
+// 从 URL 中提取域名
+function extractDomain(url) {
+    try {
+        const urlObj = new URL(url);
+        return urlObj.hostname;
+    } catch (e) {
+        return null;
+    }
+}
+
+// 获取 favicon URL
+function getFaviconUrl(domain) {
+    return `https://www.google.com/s2/favicons?domain=${domain}&sz=32`;
+}
+
 function addEngine() {
     const name = document.getElementById('engine-name').value.trim();
     const url = document.getElementById('engine-url').value.trim();
@@ -201,17 +216,28 @@ function addEngine() {
     }
 
     const engineKey = name.toLowerCase().replace(/\s+/g, '_');
-    
+
     if (defaultEngines[engineKey] || customEngines[engineKey]) {
         showStatus('搜索引擎已存在', 'error');
         return;
+    }
+
+    // 如果没有提供图标，自动从 URL 获取 favicon
+    let finalIcon = icon;
+    if (!finalIcon) {
+        const domain = extractDomain(url);
+        if (domain) {
+            finalIcon = getFaviconUrl(domain);
+        } else {
+            finalIcon = 'icons/logo.png';
+        }
     }
 
     customEngines[engineKey] = {
         name: name,
         url: url,
         searchParam: param,
-        icon: icon || 'icons/logo.png'
+        icon: finalIcon
     };
 
     engineOrder.push(engineKey);
