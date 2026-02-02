@@ -55,13 +55,20 @@ function saveEngines() {
 }
 
 function loadEngines() {
-    chrome.storage.sync.get(['searchEngines', 'engineOrder'], function(result) {
+    chrome.storage.sync.get(['searchEngines', 'engineOrder', 'openInNewTab'], function(result) {
         if (result.searchEngines) {
             customEngines = result.searchEngines;
         }
         if (result.engineOrder) {
             engineOrder = result.engineOrder;
         }
+
+        // 加载新标签页设置
+        const newTabCheckbox = document.getElementById('new-tab-checkbox');
+        if (newTabCheckbox) {
+            newTabCheckbox.checked = result.openInNewTab || false;
+        }
+
         renderEngines();
     });
 }
@@ -241,5 +248,15 @@ document.addEventListener('DOMContentLoaded', function() {
     const resetBtn = document.getElementById('reset-btn');
     if (resetBtn) {
         resetBtn.addEventListener('click', resetSettings);
+    }
+
+    // 为新标签页选项添加事件监听器
+    const newTabCheckbox = document.getElementById('new-tab-checkbox');
+    if (newTabCheckbox) {
+        newTabCheckbox.addEventListener('change', function() {
+            chrome.storage.sync.set({openInNewTab: this.checked}, function() {
+                showStatus('设置已保存');
+            });
+        });
     }
 });

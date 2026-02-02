@@ -36,6 +36,7 @@ let customEngines = {};
 let engineOrder = Object.keys(defaultEngines);
 let currentQuery = "";
 let currentEngine = "";
+let openInNewTab = false;
 
 /**
  * 从URL中提取搜索参数
@@ -163,8 +164,12 @@ function renderEngines() {
         item.addEventListener('click', () => {
             if (currentQuery) {
                 const searchUrl = engine.url.replace('%s', encodeURIComponent(currentQuery));
-                chrome.tabs.update({url: searchUrl});
-                window.close();
+                if (openInNewTab) {
+                    chrome.tabs.create({url: searchUrl});
+                } else {
+                    chrome.tabs.update({url: searchUrl});
+                    window.close();
+                }
             }
         });
 
@@ -173,12 +178,21 @@ function renderEngines() {
 }
 
 function loadEngines() {
-    chrome.storage.sync.get(['searchEngines', 'engineOrder'], function(result) {
+    chrome.storage.sync.get(['searchEngines', 'engineOrder', 'openInNewTab'], function(result) {
         if (result.searchEngines) {
             customEngines = result.searchEngines;
         }
         if (result.engineOrder) {
             engineOrder = result.engineOrder;
+        }
+        if (result.openInNewTab !== undefined) {
+            openInNewTab = result.openInNewTab;
+        }
+
+        // 更新checkbox状态
+        const checkbox = document.getElementById('new-tab-checkbox');
+        if (checkbox) {
+            checkbox.checked = openInNewTab;
         }
 
         // 按照设置页面的逻辑重建engines对象
@@ -201,4 +215,13 @@ document.addEventListener('DOMContentLoaded', function() {
     document.getElementById('options-btn').addEventListener('click', function() {
         chrome.runtime.openOptionsPage();
     });
+
+    // 监听新标签页选项变化
+    const newTabCheckbox = document.getElementById('new-tab-checkbox');
+    if (newTabCheckbox) {
+        newTabCheckbox.addEventListener('change', function() {
+            openInNewTab = this.checked;
+            chrome.storage.sync.set({openInNewTab: openInNewTab});
+        });
+    }
 });

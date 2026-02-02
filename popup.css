@@ -70,6 +70,26 @@ h3 {
     color: #333;
 }
 
+.new-tab-option {
+    margin: 10px 0;
+    padding: 8px 0;
+    border-top: 1px solid #ddd;
+    font-size: 12px;
+    color: #666;
+}
+
+.new-tab-option label {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+}
+
+.new-tab-option input[type="checkbox"] {
+    margin-right: 6px;
+    cursor: pointer;
+}
+
 .options-btn {
     width: 100%;
     padding: 8px;
