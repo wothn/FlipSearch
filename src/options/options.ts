@@ -66,6 +66,7 @@ class OptionsController {
     item.className = 'engine-item';
     item.draggable = true;
     item.dataset.engineKey = engine.id;
+    item.dataset.order = config.order.toString();
 
     if (!config.enabled) {
       item.style.opacity = '0.5';
