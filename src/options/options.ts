@@ -9,6 +9,7 @@ import type { SearchEngine, EngineRuntimeConfig } from '../types';
 class OptionsController {
   private manager!: EngineManager;
   private draggedKey: string | null = null;
+  private editingEngineId: string | null = null;
 
   async init(): Promise<void> {
     this.manager = await EngineManager.initialize();
@@ -24,9 +25,14 @@ class OptionsController {
   }
 
   private bindEvents(): void {
-    // 添加搜索引擎
+    // 添加/保存搜索引擎
     document.getElementById('add-engine-btn')?.addEventListener('click', () => {
-      this.addEngine();
+      this.saveEngine();
+    });
+
+    // 取消编辑
+    document.getElementById('cancel-edit-btn')?.addEventListener('click', () => {
+      this.cancelEdit();
     });
 
     // 重置设置
@@ -103,23 +109,36 @@ class OptionsController {
     engineInfo.appendChild(img);
     engineInfo.appendChild(details);
 
-    // 操作按钮
-    const toggleBtn = document.createElement('button');
-    toggleBtn.className = 'toggle-btn';
+    // 操作按钮区域
+    const actionsDiv = document.createElement('div');
+    actionsDiv.className = 'engine-actions';
 
     if (engine.isBuiltIn) {
+      // 内置引擎：启用/禁用按钮
+      const toggleBtn = document.createElement('button');
+      toggleBtn.className = 'toggle-btn';
       toggleBtn.textContent = config.enabled ? '禁用' : '启用';
       toggleBtn.className += config.enabled ? ' disable-btn' : ' enable-btn';
       toggleBtn.onclick = () => this.toggleEngine(engine.id, !config.enabled);
+      actionsDiv.appendChild(toggleBtn);
     } else {
-      toggleBtn.textContent = '删除';
-      toggleBtn.className += ' disable-btn';
-      toggleBtn.onclick = () => this.removeEngine(engine.id);
+      // 自定义引擎：编辑和删除按钮
+      const editBtn = document.createElement('button');
+      editBtn.className = 'toggle-btn enable-btn';
+      editBtn.textContent = '编辑';
+      editBtn.onclick = () => this.startEdit(engine.id);
+      actionsDiv.appendChild(editBtn);
+
+      const deleteBtn = document.createElement('button');
+      deleteBtn.className = 'toggle-btn disable-btn';
+      deleteBtn.textContent = '删除';
+      deleteBtn.onclick = () => this.removeEngine(engine.id);
+      actionsDiv.appendChild(deleteBtn);
     }
 
     item.appendChild(dragHandle);
     item.appendChild(engineInfo);
-    item.appendChild(toggleBtn);
+    item.appendChild(actionsDiv);
 
     // 绑定拖拽事件（仅启用的引擎可拖拽）
     if (config.enabled) {
@@ -190,7 +209,7 @@ class OptionsController {
     }
   }
 
-  private async addEngine(): Promise<void> {
+  private async saveEngine(): Promise<void> {
     const nameInput = document.getElementById('engine-name') as HTMLInputElement;
     const urlInput = document.getElementById('engine-url') as HTMLInputElement;
     const paramInput = document.getElementById('engine-param') as HTMLInputElement;
@@ -219,29 +238,88 @@ class OptionsController {
     }
 
     try {
-      await this.manager.addCustomEngine({
-        name,
-        url,
-        searchParam,
-        icon,
-      });
+      if (this.editingEngineId) {
+        // 编辑模式：更新现有引擎
+        await this.manager.updateEngine(this.editingEngineId, {
+          name,
+          url,
+          searchParam,
+          icon,
+        });
+        this.showStatus('搜索引擎已更新');
+      } else {
+        // 添加模式：添加新引擎
+        await this.manager.addCustomEngine({
+          name,
+          url,
+          searchParam,
+          icon,
+        });
+        this.showStatus('搜索引擎已添加');
+      }
 
-      // 清空表单
-      nameInput.value = '';
-      urlInput.value = '';
-      paramInput.value = '';
-      iconInput.value = '';
-
+      // 清空表单并退出编辑模式
+      this.cancelEdit();
       this.renderEngines();
-      this.showStatus('搜索引擎已添加');
     } catch (error) {
       if (error instanceof Error && error.message.includes('already exists')) {
         this.showStatus('搜索引擎已存在', 'error');
       } else {
-        console.error('Add engine failed:', error);
-        this.showStatus('添加失败', 'error');
+        console.error('Save engine failed:', error);
+        this.showStatus(this.editingEngineId ? '更新失败' : '添加失败', 'error');
       }
     }
+  }
+
+  private startEdit(engineId: string): void {
+    const engine = this.manager.getEngineById(engineId);
+    if (!engine) return;
+
+    this.editingEngineId = engineId;
+
+    // 填充表单
+    const nameInput = document.getElementById('engine-name') as HTMLInputElement;
+    const urlInput = document.getElementById('engine-url') as HTMLInputElement;
+    const paramInput = document.getElementById('engine-param') as HTMLInputElement;
+    const iconInput = document.getElementById('engine-icon') as HTMLInputElement;
+    const formTitle = document.getElementById('form-title');
+    const submitBtn = document.getElementById('add-engine-btn');
+    const cancelBtn = document.getElementById('cancel-edit-btn');
+
+    nameInput.value = engine.name;
+    urlInput.value = engine.url;
+    paramInput.value = engine.searchParam;
+    iconInput.value = engine.icon || '';
+
+    if (formTitle) formTitle.textContent = '编辑搜索引擎';
+    if (submitBtn) submitBtn.textContent = '保存修改';
+    if (cancelBtn) cancelBtn.style.display = 'inline-block';
+
+    // 滚动到表单区域
+    nameInput.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    nameInput.focus();
+  }
+
+  private cancelEdit(): void {
+    this.editingEngineId = null;
+
+    // 清空表单
+    const nameInput = document.getElementById('engine-name') as HTMLInputElement;
+    const urlInput = document.getElementById('engine-url') as HTMLInputElement;
+    const paramInput = document.getElementById('engine-param') as HTMLInputElement;
+    const iconInput = document.getElementById('engine-icon') as HTMLInputElement;
+    const formTitle = document.getElementById('form-title');
+    const submitBtn = document.getElementById('add-engine-btn');
+    const cancelBtn = document.getElementById('cancel-edit-btn');
+
+    nameInput.value = '';
+    urlInput.value = '';
+    paramInput.value = '';
+    iconInput.value = '';
+
+    if (formTitle) formTitle.textContent = '添加搜索引擎';
+    if (submitBtn) submitBtn.textContent = '添加搜索引擎';
+    if (cancelBtn) cancelBtn.style.display = 'none';
   }
 
   private async resetSettings(): Promise<void> {

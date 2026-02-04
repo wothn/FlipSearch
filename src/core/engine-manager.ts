@@ -242,6 +242,44 @@ export class EngineManager {
   }
 
   /**
+   * 更新搜索引擎（仅自定义引擎）
+   */
+  async updateEngine(
+    id: string,
+    engineData: Omit<SearchEngine, 'id' | 'isBuiltIn'>
+  ): Promise<SearchEngine> {
+    this.checkInitialized();
+
+    const engine = this.engines.get(id);
+    if (!engine) {
+      throw new Error(`Engine ${id} not found`);
+    }
+
+    if (engine.isBuiltIn) {
+      throw new Error(`Cannot update built-in engine ${id}`);
+    }
+
+    const updatedEngine: SearchEngine = {
+      ...engineData,
+      id,
+      isBuiltIn: false,
+    };
+
+    this.engines.set(id, updatedEngine);
+    await this.save();
+
+    return updatedEngine;
+  }
+
+  /**
+   * 根据ID获取搜索引擎
+   */
+  getEngineById(id: string): SearchEngine | null {
+    this.checkInitialized();
+    return this.engines.get(id) ?? null;
+  }
+
+  /**
    * 重置为默认设置
    */
   async resetToDefaults(): Promise<void> {

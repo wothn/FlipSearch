@@ -26,7 +26,8 @@
             </div>
 
             <div class="add-section">
-                <h2 class="section-title">添加搜索引擎</h2>
+                <h2 class="section-title" id="form-title">添加搜索引擎</h2>
+                <input type="hidden" id="edit-engine-id" value="" />
                 <div class="form-group">
                     <label>名称:</label>
                     <input
@@ -59,9 +60,10 @@
                         placeholder="留空将自动从网站获取 favicon"
                     />
                 </div>
-                <button class="add-btn" id="add-engine-btn">
-                    添加搜索引擎
-                </button>
+                <div class="form-actions">
+                    <button class="add-btn" id="add-engine-btn">添加搜索引擎</button>
+                    <button class="cancel-btn" id="cancel-edit-btn" style="display: none;">取消编辑</button>
+                </div>
             </div>
         </div>
 
