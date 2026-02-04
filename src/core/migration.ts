@@ -23,7 +23,7 @@ export async function migrateIfNeeded(): Promise<void> {
  * 新格式: { schemaVersion: 1, engines: {...}, runtimeConfigs: {...}, userPreferences: {...} }
  */
 async function migrateFromLegacy(): Promise<void> {
-  console.log('[FlipSearch] 开始数据迁移...');
+  
 
   try {
     // 1. 读取旧格式数据
@@ -84,9 +84,9 @@ async function migrateFromLegacy(): Promise<void> {
     });
 
     // 6. 清理旧数据
-    await StorageManager.remove(['searchEngines', 'engineOrder']);
+    await StorageManager.remove(['searchEngines', 'engineOrder', 'openInNewTab']);
 
-    console.log('[FlipSearch] 数据迁移完成');
+    
   } catch (error) {
     console.error('[FlipSearch] 数据迁移失败:', error);
     // 迁移失败时初始化默认数据
