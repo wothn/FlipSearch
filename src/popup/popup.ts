@@ -34,8 +34,8 @@ class PopupController {
       chrome.runtime.openOptionsPage();
     });
 
-    // 绑定搜索词编辑功能
-    this.bindQueryEditEvents();
+    // 绑定搜索词输入框
+    this.bindQueryInput();
 
     // 提取并显示当前搜索
     await this.extractCurrentSearch();
@@ -51,90 +51,35 @@ class PopupController {
       this.currentEngineId = result.engineId;
     }
 
-    this.updateQueryDisplay();
+    this.updateQueryInput();
     this.renderEngines();
   }
 
-  private updateQueryDisplay(): void {
-    const queryText = document.getElementById('query-text');
-    if (queryText) {
-      queryText.textContent = this.currentQuery 
-        ? `当前搜索: ${this.currentQuery}` 
-        : '当前未在搜索';
+  private updateQueryInput(): void {
+    const queryInput = document.getElementById('query-input') as HTMLInputElement;
+    if (queryInput) {
+      queryInput.value = this.currentQuery;
     }
   }
 
-  private bindQueryEditEvents(): void {
-    const queryDisplay = document.getElementById('query-display');
+  private bindQueryInput(): void {
     const queryInput = document.getElementById('query-input') as HTMLInputElement;
-
-    if (!queryDisplay || !queryInput) return;
-
-    // 点击进入编辑模式
-    queryDisplay.addEventListener('click', (e) => {
-      if (e.target !== queryInput && queryInput.style.display === 'none' && this.currentQuery) {
-        this.enableQueryEdit();
-      }
-    });
-
-    // 回车保存，ESC 取消
-    queryInput.addEventListener('keydown', (e) => {
-      if (e.key === 'Enter') {
-        this.saveQueryEdit();
-      } else if (e.key === 'Escape') {
-        this.cancelQueryEdit();
-      }
-    });
+    if (!queryInput) return;
 
     // 失去焦点时保存
     queryInput.addEventListener('blur', () => {
-      this.saveQueryEdit();
+      const newQuery = queryInput.value.trim();
+      if (newQuery) {
+        this.currentQuery = newQuery;
+      }
     });
-  }
 
-  private enableQueryEdit(): void {
-    const queryDisplay = document.getElementById('query-display');
-    const queryText = document.getElementById('query-text');
-    const queryInput = document.getElementById('query-input') as HTMLInputElement;
-
-    if (!queryDisplay || !queryText || !queryInput) return;
-
-    queryDisplay.classList.add('editing');
-    queryText.style.display = 'none';
-    queryInput.style.display = 'block';
-    queryInput.value = this.currentQuery;
-    queryInput.focus();
-    queryInput.select();
-  }
-
-  private saveQueryEdit(): void {
-    const queryDisplay = document.getElementById('query-display');
-    const queryText = document.getElementById('query-text');
-    const queryInput = document.getElementById('query-input') as HTMLInputElement;
-
-    if (!queryDisplay || !queryText || !queryInput) return;
-
-    const newQuery = queryInput.value.trim();
-    if (newQuery) {
-      this.currentQuery = newQuery;
-    }
-
-    queryDisplay.classList.remove('editing');
-    queryInput.style.display = 'none';
-    queryText.style.display = 'inline';
-    this.updateQueryDisplay();
-  }
-
-  private cancelQueryEdit(): void {
-    const queryDisplay = document.getElementById('query-display');
-    const queryText = document.getElementById('query-text');
-    const queryInput = document.getElementById('query-input') as HTMLInputElement;
-
-    if (!queryDisplay || !queryText || !queryInput) return;
-
-    queryDisplay.classList.remove('editing');
-    queryInput.style.display = 'none';
-    queryText.style.display = 'inline';
+    // 回车时保存并移除焦点
+    queryInput.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') {
+        queryInput.blur();
+      }
+    });
   }
 
   private renderEngines(): void {
