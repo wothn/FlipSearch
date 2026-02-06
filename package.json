@@ -1,7 +1,7 @@
 {
   "name": "flipsearch",
-  "version": "2.0.0",
-  "description": "搜索引擎切换器 - Chrome Extension",
+  "version": "0.2.0",
+  "description": "FlipSearch - Chrome Extension",
   "scripts": {
     "build": "vite build",
     "clean": "rimraf dist",

@@ -3,6 +3,7 @@
  */
 import { EngineManager } from '../core/engine-manager';
 import { StorageManager } from '../core/storage';
+import { setupIconWithFallback } from '../utils/icons';
 import type { SearchEngine } from '../types';
 
 class PopupController {
@@ -98,14 +99,8 @@ class PopupController {
 
       const img = document.createElement('img');
       img.className = 'engine-icon';
-      // 页面在 popup/ 子目录中，图标在 icons/ 目录，需要 ../ 前缀
-      img.src = engine.icon.startsWith('icons/') ? `../${engine.icon}` : engine.icon;
-      img.onerror = () => {
-        // 防止循环触发，只在第一次失败时替换
-        if (!img.src.endsWith('icons/logo.png')) {
-          img.src = '../icons/logo.png';
-        }
-      };
+      // 页面在 popup/ 子目录中，parentDepth = 1
+      setupIconWithFallback(img, engine.icon, 1);
 
       const name = document.createElement('span');
       name.className = 'engine-name';

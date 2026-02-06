@@ -4,6 +4,7 @@
 import { EngineManager } from '../core/engine-manager';
 import { StorageManager } from '../core/storage';
 import { extractDomain, getFaviconUrl, extractSiteFilterDomain } from '../utils/url';
+import { setupIconWithFallback } from '../utils/icons';
 import type { SearchEngine, EngineRuntimeConfig, Theme } from '../types';
 
 class OptionsController {
@@ -243,12 +244,8 @@ class OptionsController {
     // 引擎图标
     const img = document.createElement('img');
     img.className = 'engine-card-icon';
-    img.src = engine.icon.startsWith('icons/') ? `../${engine.icon}` : engine.icon;
-    img.onerror = () => {
-      if (!img.src.endsWith('icons/logo.png')) {
-        img.src = '../icons/logo.png';
-      }
-    };
+    // 页面在 options/ 子目录中，parentDepth = 1
+    setupIconWithFallback(img, engine.icon, 1);
 
     // 引擎信息
     const info = document.createElement('div');
