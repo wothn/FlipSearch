@@ -3,7 +3,7 @@
  */
 import { EngineManager } from '../core/engine-manager';
 import { StorageManager } from '../core/storage';
-import { extractDomain, getFaviconUrl } from '../utils/url';
+import { extractDomain, getFaviconUrl, extractSiteFilterDomain } from '../utils/url';
 import type { SearchEngine, EngineRuntimeConfig } from '../types';
 
 class OptionsController {
@@ -233,8 +233,14 @@ class OptionsController {
 
     // 自动获取图标
     if (!icon) {
-      const domain = extractDomain(url);
-      icon = domain ? getFaviconUrl(domain) : '../icons/logo.png';
+      // 优先从 site: 过滤器提取域名（如 site:v2ex.com/t → v2ex.com）
+      const siteDomain = extractSiteFilterDomain(url);
+      if (siteDomain) {
+        icon = getFaviconUrl(siteDomain);
+      } else {
+        const domain = extractDomain(url);
+        icon = domain ? getFaviconUrl(domain) : '../icons/logo.png';
+      }
     }
 
     try {

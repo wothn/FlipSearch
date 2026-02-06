@@ -4,7 +4,7 @@
 import type { SearchEngine, EngineRuntimeConfig, ExtractedSearch } from '../types';
 import { StorageManager } from './storage';
 import { DEFAULT_ENGINES, DEFAULT_ENGINE_ORDER, DEFAULT_ENGINE_DOMAINS } from '../common';
-import { COMMON_SEARCH_PARAMS, parseSiteSearch, extractDomain } from '../utils/url';
+import { COMMON_SEARCH_PARAMS, parseSiteSearch, extractDomain, extractSearchParamPrefix } from '../utils/url';
 import { migrateIfNeeded } from './migration';
 
 export class EngineManager {
@@ -292,6 +292,7 @@ export class EngineManager {
 
   /**
    * 从 URL 识别搜索引擎
+   * 使用前缀匹配策略，优先匹配更具体的引擎（如 site-search 优先于普通搜索）
    */
   identifyEngineFromUrl(url: string): string | null {
     this.checkInitialized();
@@ -301,21 +302,35 @@ export class EngineManager {
       const hostname = urlObj.hostname.toLowerCase().replace(/^www\./, '');
       const params = new URLSearchParams(urlObj.search);
 
-      // 遍历所有引擎进行匹配
+      let bestMatchId: string | null = null;
+      let bestPrefixLen = -1;
+
+      // 遍历所有引擎，找到最佳匹配（前缀最长的优先）
       for (const [id, engine] of this.engines) {
         const engineDomain = DEFAULT_ENGINE_DOMAINS[id] ?? extractDomain(engine.url);
-        
         if (!engineDomain) continue;
 
-        // 检查域名匹配（支持子域名）
         if (hostname === engineDomain || hostname.endsWith(`.${engineDomain}`)) {
-          // 检查搜索参数
           const paramValue = params.get(engine.searchParam);
-          if (paramValue) {
-            return id;
+          if (!paramValue) continue;
+
+          const prefix = extractSearchParamPrefix(engine.url, engine.searchParam);
+
+          if (prefix) {
+            // 有前缀的引擎（如 site-search），检查前缀是否匹配
+            if (paramValue.startsWith(prefix) && prefix.length > bestPrefixLen) {
+              bestMatchId = id;
+              bestPrefixLen = prefix.length;
+            }
+          } else if (bestPrefixLen < 0) {
+            // 普通引擎（无前缀），作为回退匹配
+            bestMatchId = id;
+            bestPrefixLen = 0;
           }
         }
       }
+
+      return bestMatchId;
     } catch (e) {
       console.error('解析URL失败:', e);
     }
@@ -325,6 +340,7 @@ export class EngineManager {
 
   /**
    * 从 URL 提取搜索信息
+   * 使用前缀匹配策略，能正确区分普通搜索和 site-search
    */
   extractSearchFromUrl(url: string): ExtractedSearch {
     this.checkInitialized();
@@ -334,7 +350,10 @@ export class EngineManager {
       const hostname = urlObj.hostname.toLowerCase().replace(/^www\./, '');
       const params = new URLSearchParams(urlObj.search);
 
-      // 首先匹配已知搜索引擎
+      // URLSearchParams.get() 已自动解码，无需再调用 decodeURIComponent
+      let bestMatch: (ExtractedSearch & { prefixLen: number }) | null = null;
+
+      // 匹配所有启用的引擎，找到最佳匹配
       for (const [id, engine] of this.engines) {
         const config = this.configs.get(id);
         if (!config?.enabled) continue;
@@ -344,26 +363,46 @@ export class EngineManager {
 
         if (hostname === engineDomain || hostname.endsWith(`.${engineDomain}`)) {
           const paramValue = params.get(engine.searchParam);
-          if (paramValue) {
-            const query = decodeURIComponent(paramValue);
-            const { query: parsedQuery, isSiteSearch } = parseSiteSearch(query);
-            
-            return {
+          if (!paramValue) continue;
+
+          const prefix = extractSearchParamPrefix(engine.url, engine.searchParam);
+
+          if (prefix) {
+            // 有前缀的引擎（如 site:xxx），检查前缀匹配
+            if (paramValue.startsWith(prefix) && (!bestMatch || prefix.length > bestMatch.prefixLen)) {
+              bestMatch = {
+                engineId: id,
+                query: paramValue.substring(prefix.length),
+                isSiteSearch: true,
+                prefixLen: prefix.length,
+              };
+            }
+          } else if (!bestMatch) {
+            // 普通引擎（无前缀），作为回退匹配
+            const { query: parsedQuery, isSiteSearch } = parseSiteSearch(paramValue);
+            bestMatch = {
               engineId: id,
               query: parsedQuery,
               isSiteSearch,
+              prefixLen: 0,
             };
           }
         }
+      }
+
+      if (bestMatch) {
+        return {
+          engineId: bestMatch.engineId,
+          query: bestMatch.query,
+          isSiteSearch: bestMatch.isSiteSearch,
+        };
       }
 
       // 回退到通用搜索参数检测
       for (const param of COMMON_SEARCH_PARAMS) {
         const paramValue = params.get(param);
         if (paramValue) {
-          const query = decodeURIComponent(paramValue);
-          const { query: parsedQuery, isSiteSearch } = parseSiteSearch(query);
-          
+          const { query: parsedQuery, isSiteSearch } = parseSiteSearch(paramValue);
           return {
             engineId: null,
             query: parsedQuery,
