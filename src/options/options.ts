@@ -4,24 +4,53 @@
 import { EngineManager } from '../core/engine-manager';
 import { StorageManager } from '../core/storage';
 import { extractDomain, getFaviconUrl, extractSiteFilterDomain } from '../utils/url';
-import type { SearchEngine, EngineRuntimeConfig } from '../types';
+import type { SearchEngine, EngineRuntimeConfig, Theme } from '../types';
 
 class OptionsController {
   private manager!: EngineManager;
   private draggedKey: string | null = null;
   private editingEngineId: string | null = null;
+  private currentTheme: Theme = 'light';
 
   async init(): Promise<void> {
     this.manager = await EngineManager.initialize();
+    
+    // 加载用户偏好设置
+    const prefs = await StorageManager.get('userPreferences');
+    this.currentTheme = prefs.theme ?? 'light';
+    
+    // 应用主题
+    this.applyTheme(this.currentTheme);
+    
     this.renderEngines();
     this.bindEvents();
     
     // 加载新标签页设置
-    const prefs = await StorageManager.get('userPreferences');
     const checkbox = document.getElementById('new-tab-checkbox') as HTMLInputElement;
     if (checkbox) {
       checkbox.checked = prefs.openInNewTab;
     }
+  }
+
+  private applyTheme(theme: Theme): void {
+    document.documentElement.setAttribute('data-theme', theme);
+    
+    // 更新主题选择器状态
+    document.querySelectorAll('.theme-option').forEach(option => {
+      option.classList.toggle('active', option.getAttribute('data-theme') === theme);
+    });
+  }
+
+  private async handleThemeChange(theme: Theme): Promise<void> {
+    this.currentTheme = theme;
+    this.applyTheme(theme);
+    
+    await StorageManager.set('userPreferences', {
+      openInNewTab: (document.getElementById('new-tab-checkbox') as HTMLInputElement)?.checked ?? false,
+      theme,
+    });
+    
+    this.showStatus('主题已切换');
   }
 
   private bindEvents(): void {
@@ -44,10 +73,21 @@ class OptionsController {
     const newTabCheckbox = document.getElementById('new-tab-checkbox') as HTMLInputElement;
     if (newTabCheckbox) {
       newTabCheckbox.addEventListener('change', async () => {
-        await StorageManager.set('userPreferences', { openInNewTab: newTabCheckbox.checked });
+        await StorageManager.set('userPreferences', {
+          openInNewTab: newTabCheckbox.checked,
+          theme: this.currentTheme,
+        });
         this.showStatus('设置已保存');
       });
     }
+
+    // 主题选择器
+    document.querySelectorAll('.theme-option').forEach(option => {
+      option.addEventListener('click', () => {
+        const theme = option.getAttribute('data-theme') as Theme;
+        this.handleThemeChange(theme);
+      });
+    });
   }
 
   private renderEngines(): void {

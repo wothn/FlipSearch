@@ -9,6 +9,7 @@ const DEFAULT_SCHEMA: StorageSchema = {
   runtimeConfigs: {},
   userPreferences: {
     openInNewTab: false,
+    theme: 'light',
   },
 };
 

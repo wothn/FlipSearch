@@ -13,10 +13,14 @@ class PopupController {
 
   async init(): Promise<void> {
     this.manager = await EngineManager.initialize();
-    
+
     // 加载用户偏好设置
     const prefs = await StorageManager.get('userPreferences');
     this.openInNewTab = prefs.openInNewTab;
+
+    // 应用主题
+    const theme = prefs.theme ?? 'light';
+    document.documentElement.setAttribute('data-theme', theme);
 
     // 设置新标签页复选框状态
     const checkbox = document.getElementById('new-tab-checkbox') as HTMLInputElement;
@@ -187,7 +191,11 @@ class PopupController {
   private async handleNewTabChange(e: Event): Promise<void> {
     const checkbox = e.target as HTMLInputElement;
     this.openInNewTab = checkbox.checked;
-    await StorageManager.set('userPreferences', { openInNewTab: this.openInNewTab });
+    const currentTheme = document.documentElement.getAttribute('data-theme') ?? 'light';
+    await StorageManager.set('userPreferences', {
+      openInNewTab: this.openInNewTab,
+      theme: currentTheme as import('../types').Theme,
+    });
   }
 }
 

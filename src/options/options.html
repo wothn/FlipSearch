@@ -8,15 +8,33 @@
     <body>
         <h1>搜索引擎设置</h1>
 
-        <div class="settings-section">
-            <h2 class="settings-title">通用设置</h2>
-            <div class="setting-item">
-                <label>
-                    <input type="checkbox" id="new-tab-checkbox" />
-                    在新标签页打开搜索结果
-                </label>
-            </div>
+    <div class="settings-section">
+      <h2 class="settings-title">通用设置</h2>
+      <div class="setting-item">
+        <label>
+          <input type="checkbox" id="new-tab-checkbox" />
+          在新标签页打开搜索结果
+        </label>
+      </div>
+    </div>
+
+    <div class="settings-section">
+      <h2 class="settings-title">主题外观</h2>
+      <div class="theme-selector" id="theme-selector">
+        <div class="theme-option" data-theme="light">
+          <div class="theme-preview light"></div>
+          <span class="theme-name">冷灰蓝</span>
         </div>
+        <div class="theme-option" data-theme="dark">
+          <div class="theme-preview dark"></div>
+          <span class="theme-name">深色模式</span>
+        </div>
+        <div class="theme-option" data-theme="minimal">
+          <div class="theme-preview minimal"></div>
+          <span class="theme-name">极简白</span>
+        </div>
+      </div>
+    </div>
 
         <div class="container">
             <div class="engine-section">

@@ -1,136 +1,204 @@
+@import './themes.css';
+
+/* ========================================
+   Popup 样式
+   ======================================== */
 body {
-    width: 250px;
+    width: 280px;
     margin: 0;
-    padding: 10px;
-    font-family: Arial, sans-serif;
-    background-color: #f5f5f5;
+    padding: 16px;
+    font-family: var(--font-family);
+    background-color: var(--bg-body);
+    color: var(--text-primary);
 }
 
 .container {
-    text-align: center;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
 }
 
-h3 {
-    margin: 0 0 10px 0;
-    color: #333;
-    font-size: 16px;
-}
-
+/* 搜索词显示区域 */
 .query-info {
-    margin-bottom: 10px;
-    font-size: 12px;
-    color: #666;
-    word-break: break-all;
+    padding: 10px 12px;
+    font-size: 13px;
+    color: var(--text-secondary);
+    background-color: var(--bg-card);
+    border-radius: var(--radius-md);
+    border: 1px solid var(--border-color);
     cursor: pointer;
-    padding: 6px 8px;
-    background-color: #fff;
-    border-radius: 4px;
-    border: 1px solid transparent;
-    transition: border-color 0.2s, background-color 0.2s;
+    word-break: break-all;
+    transition: all 0.2s ease;
 }
 
 .query-info:hover {
-    border-color: #007cba;
-    background-color: #f0f8ff;
+    border-color: var(--border-focus);
+    background-color: var(--bg-hover);
 }
 
 .query-info.editing {
-    padding: 4px;
+    padding: 8px;
 }
 
 .query-input {
     width: 100%;
-    padding: 4px 6px;
-    font-size: 12px;
-    border: 1px solid #007cba;
-    border-radius: 3px;
+    padding: 8px 10px;
+    font-size: 13px;
+    font-family: inherit;
+    color: var(--text-primary);
+    background-color: var(--bg-input);
+    border: 1px solid var(--border-focus);
+    border-radius: var(--radius-sm);
     outline: none;
     box-sizing: border-box;
 }
 
 .query-input:focus {
-    border-color: #005a87;
+    box-shadow: 0 0 0 3px var(--color-primary-light);
 }
 
+/* 引擎列表 */
 .engines-list {
-    margin-bottom: 15px;
-    max-height: 250px;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    max-height: 280px;
     overflow-y: auto;
 }
 
 .engine-item {
     display: flex;
     align-items: center;
-    padding: 8px;
-    margin: 5px 0;
-    background-color: white;
-    border-radius: 4px;
+    gap: 10px;
+    padding: 10px 12px;
+    background-color: var(--bg-card);
+    border-radius: var(--radius-md);
+    border: 1px solid var(--border-color);
     cursor: pointer;
-    transition: background-color 0.2s;
+    transition: all 0.15s ease;
 }
 
 .engine-item:hover {
-    background-color: #e8f4f8;
+    background-color: var(--bg-hover);
+    border-color: var(--border-focus);
+    transform: translateY(-1px);
+    box-shadow: var(--shadow-sm);
 }
 
+.engine-item:active {
+    transform: translateY(0);
+}
+
+/* 当前引擎标记 - 左侧蓝条 */
 .engine-item.current-engine {
-    background-color: #d4edda;
-    border: 1px solid #28a745;
     position: relative;
+    background-color: var(--color-primary-light);
+    border-color: var(--color-primary);
+}
+
+.engine-item.current-engine::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 3px;
+    height: 60%;
+    background-color: var(--color-primary);
+    border-radius: 0 3px 3px 0;
 }
 
 .engine-item.current-engine::after {
-    content: "✓";
-    color: #28a745;
-    font-weight: bold;
+    content: '✓';
+    color: var(--color-primary);
+    font-weight: 600;
     margin-left: auto;
+    font-size: 14px;
 }
 
 .engine-icon {
     width: 20px;
     height: 20px;
-    margin-right: 8px;
     object-fit: contain;
+    flex-shrink: 0;
 }
 
 .engine-name {
     flex: 1;
     font-size: 14px;
-    color: #333;
+    font-weight: 500;
+    color: var(--text-primary);
 }
 
+/* 新标签页选项 */
 .new-tab-option {
-    margin: 10px 0;
     padding: 8px 0;
-    border-top: 1px solid #ddd;
-    font-size: 12px;
-    color: #666;
+    border-top: 1px solid var(--border-color);
 }
 
 .new-tab-option label {
     display: flex;
     align-items: center;
-    justify-content: center;
+    gap: 8px;
     cursor: pointer;
+    font-size: 13px;
+    color: var(--text-secondary);
 }
 
 .new-tab-option input[type="checkbox"] {
-    margin-right: 6px;
+    width: 16px;
+    height: 16px;
     cursor: pointer;
+    accent-color: var(--color-primary);
 }
 
+/* 设置按钮 */
 .options-btn {
     width: 100%;
-    padding: 8px;
-    background-color: #007cba;
-    color: white;
-    border: none;
-    border-radius: 4px;
-    cursor: pointer;
+    padding: 10px 16px;
     font-size: 14px;
-    transition: background-color 0.2s;
+    font-weight: 500;
+    font-family: inherit;
+    color: white;
+    background-color: var(--color-primary);
+    border: none;
+    border-radius: var(--radius-md);
+    cursor: pointer;
+    transition: all 0.15s ease;
 }
 
 .options-btn:hover {
-    background-color: #005a87;
+    background-color: var(--color-primary-hover);
+    transform: translateY(-1px);
+    box-shadow: var(--shadow-md);
+}
+
+.options-btn:active {
+    transform: translateY(0);
+}
+
+/* 滚动条样式 */
+.engines-list::-webkit-scrollbar {
+    width: 4px;
+}
+
+.engines-list::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+.engines-list::-webkit-scrollbar-thumb {
+    background: var(--border-color);
+    border-radius: 2px;
+}
+
+.engines-list::-webkit-scrollbar-thumb:hover {
+    background: var(--text-muted);
+}
+
+/* 空状态 */
+.empty-state {
+    padding: 20px;
+    text-align: center;
+    color: var(--text-muted);
+    font-size: 13px;
 }

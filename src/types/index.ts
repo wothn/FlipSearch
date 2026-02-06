@@ -18,9 +18,13 @@ export interface EngineRuntimeConfig {
   order: number;
 }
 
+/** 主题类型 */
+export type Theme = 'light' | 'dark' | 'minimal';
+
 /** 用户偏好设置 */
 export interface UserPreferences {
   openInNewTab: boolean;
+  theme: Theme;
 }
 
 /** 存储 Schema v1 */
