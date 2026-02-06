@@ -40,6 +40,7 @@ async function migrateFromLegacy(): Promise<void> {
       runtimeConfigs: {},
       userPreferences: {
         openInNewTab: legacyData.openInNewTab ?? false,
+        theme: 'light',
       },
     };
 
@@ -123,6 +124,7 @@ async function initializeDefaultData(): Promise<void> {
     runtimeConfigs,
     userPreferences: {
       openInNewTab: false,
+      theme: 'light',
     },
   });
 }
