@@ -3,12 +3,20 @@
 /* ========================================
    Popup 样式
    ======================================== */
+html,
+body {
+    background-color: var(--bg-body);
+    width: 100%;
+    height: 100%;
+    margin: 0;
+    padding: 0;
+}
+
 body {
     width: 280px;
-    margin: 0;
     padding: 16px;
+    box-sizing: border-box;
     font-family: var(--font-family);
-    background-color: var(--bg-body);
     color: var(--text-primary);
 }
 
