@@ -23,6 +23,7 @@ class OptionsController {
     this.applyTheme(this.currentTheme);
     
     this.renderEngines();
+    this.updateStats();
     this.bindEvents();
     
     // 加载新标签页设置
@@ -35,7 +36,12 @@ class OptionsController {
   private applyTheme(theme: Theme): void {
     document.documentElement.setAttribute('data-theme', theme);
     
-    // 更新主题选择器状态
+    // 更新主题选择器状态（新样式 .theme-card）
+    document.querySelectorAll('.theme-card').forEach(option => {
+      option.classList.toggle('active', option.getAttribute('data-theme') === theme);
+    });
+    
+    // 兼容旧样式
     document.querySelectorAll('.theme-option').forEach(option => {
       option.classList.toggle('active', option.getAttribute('data-theme') === theme);
     });
@@ -54,6 +60,17 @@ class OptionsController {
   }
 
   private bindEvents(): void {
+    // 侧边导航切换
+    document.querySelectorAll('.nav-item').forEach(item => {
+      item.addEventListener('click', (e) => {
+        e.preventDefault();
+        const section = (e.currentTarget as HTMLElement).dataset.section;
+        if (section) {
+          this.switchSection(section);
+        }
+      });
+    });
+
     // 添加/保存搜索引擎
     document.getElementById('add-engine-btn')?.addEventListener('click', () => {
       this.saveEngine();
@@ -61,7 +78,24 @@ class OptionsController {
 
     // 取消编辑
     document.getElementById('cancel-edit-btn')?.addEventListener('click', () => {
-      this.cancelEdit();
+      this.closeModal();
+    });
+
+    // 模态框关闭按钮
+    document.getElementById('modal-close')?.addEventListener('click', () => {
+      this.closeModal();
+    });
+
+    // 点击遮罩关闭模态框
+    document.getElementById('engine-modal')?.addEventListener('click', (e) => {
+      if (e.target === e.currentTarget) {
+        this.closeModal();
+      }
+    });
+
+    // 浮动添加按钮
+    document.getElementById('fab-add-engine')?.addEventListener('click', () => {
+      this.openModal();
     });
 
     // 重置设置
@@ -81,13 +115,78 @@ class OptionsController {
       });
     }
 
-    // 主题选择器
-    document.querySelectorAll('.theme-option').forEach(option => {
+    // 主题选择器（新样式 .theme-card）
+    document.querySelectorAll('.theme-card').forEach(option => {
       option.addEventListener('click', () => {
         const theme = option.getAttribute('data-theme') as Theme;
         this.handleThemeChange(theme);
       });
     });
+  }
+
+  private switchSection(section: string): void {
+    // 更新导航状态
+    document.querySelectorAll('.nav-item').forEach(item => {
+      item.classList.toggle('active', (item as HTMLElement).dataset.section === section);
+    });
+
+    // 更新内容区
+    document.querySelectorAll('.content-section').forEach(sec => {
+      sec.classList.toggle('active', sec.id === `${section}-section`);
+    });
+
+    // 更新页面标题
+    const titles: Record<string, { title: string; desc: string }> = {
+      general: { title: '通用设置', desc: '配置扩展的基本行为' },
+      appearance: { title: '主题外观', desc: '个性化你的界面风格' },
+      engines: { title: '搜索引擎', desc: '管理和配置搜索源' },
+    };
+
+    const titleEl = document.getElementById('page-title');
+    const descEl = document.getElementById('page-desc');
+    if (titleEl) titleEl.textContent = titles[section].title;
+    if (descEl) descEl.textContent = titles[section].desc;
+
+    // 显示/隐藏浮动按钮
+    const fab = document.getElementById('fab-add-engine');
+    if (fab) {
+      fab.style.display = section === 'engines' ? 'flex' : 'none';
+    }
+  }
+
+  private openModal(): void {
+    this.editingEngineId = null;
+    this.resetForm();
+    
+    const modalTitle = document.getElementById('modal-title');
+    const submitBtn = document.getElementById('add-engine-btn');
+    
+    if (modalTitle) modalTitle.textContent = '添加搜索引擎';
+    if (submitBtn) submitBtn.textContent = '添加';
+    
+    document.getElementById('engine-modal')?.classList.add('active');
+    document.body.style.overflow = 'hidden';
+  }
+
+  private closeModal(): void {
+    document.getElementById('engine-modal')?.classList.remove('active');
+    document.body.style.overflow = '';
+    this.cancelEdit();
+  }
+
+  private updateStats(): void {
+    const engines = this.manager.getAllEnginesWithOrder();
+    const total = engines.length;
+    const enabled = engines.filter(e => e.config.enabled).length;
+    const custom = engines.filter(e => !e.engine.isBuiltIn).length;
+
+    const totalEl = document.getElementById('total-engines');
+    const enabledEl = document.getElementById('enabled-engines');
+    const customEl = document.getElementById('custom-engines');
+
+    if (totalEl) totalEl.textContent = total.toString();
+    if (enabledEl) enabledEl.textContent = enabled.toString();
+    if (customEl) customEl.textContent = custom.toString();
   }
 
   private renderEngines(): void {
@@ -98,97 +197,122 @@ class OptionsController {
 
     const engines = this.manager.getAllEnginesWithOrder();
 
-    engines.forEach(({ engine, config }) => {
-      const item = this.createEngineItem(engine, config);
+    engines.forEach(({ engine, config }, index) => {
+      const item = this.createEngineCard(engine, config, index);
       container.appendChild(item);
     });
+    
+    this.updateStats();
   }
 
-  private createEngineItem(
+  private createEngineCard(
     engine: SearchEngine, 
-    config: EngineRuntimeConfig
+    config: EngineRuntimeConfig,
+    index: number
   ): HTMLElement {
-    const item = document.createElement('div');
-    item.className = 'engine-item';
-    item.draggable = true;
-    item.dataset.engineKey = engine.id;
-    item.dataset.order = config.order.toString();
+    const card = document.createElement('div');
+    card.className = 'engine-card';
+    card.draggable = config.enabled;
+    card.dataset.engineKey = engine.id;
+    card.dataset.order = config.order.toString();
 
     if (!config.enabled) {
-      item.style.opacity = '0.5';
+      card.classList.add('disabled');
     }
+
+    // 序号
+    const orderNum = document.createElement('div');
+    orderNum.className = 'engine-order-number';
+    orderNum.textContent = (index + 1).toString();
 
     // 拖拽手柄
     const dragHandle = document.createElement('div');
     dragHandle.className = 'drag-handle';
-    dragHandle.textContent = '≡';
-    dragHandle.style.cursor = config.enabled ? 'move' : 'not-allowed';
+    dragHandle.innerHTML = `
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <circle cx="9" cy="12" r="1"></circle>
+        <circle cx="9" cy="5" r="1"></circle>
+        <circle cx="9" cy="19" r="1"></circle>
+        <circle cx="15" cy="12" r="1"></circle>
+        <circle cx="15" cy="5" r="1"></circle>
+        <circle cx="15" cy="19" r="1"></circle>
+      </svg>
+    `;
+    dragHandle.style.cursor = config.enabled ? 'grab' : 'not-allowed';
 
-    // 引擎信息
-    const engineInfo = document.createElement('div');
-    engineInfo.className = 'engine-info';
-
+    // 引擎图标
     const img = document.createElement('img');
-    img.className = 'engine-icon';
-    // 页面在 options/ 子目录中，图标在 icons/ 目录，需要 ../ 前缀
+    img.className = 'engine-card-icon';
     img.src = engine.icon.startsWith('icons/') ? `../${engine.icon}` : engine.icon;
     img.onerror = () => {
-      // 防止循环触发，只在第一次失败时替换
       if (!img.src.endsWith('icons/logo.png')) {
         img.src = '../icons/logo.png';
       }
     };
 
-    const details = document.createElement('div');
-    details.className = 'engine-details';
-    details.innerHTML = `
-      <h3>${engine.name}</h3>
-      <p>${engine.url.replace('%s', '[搜索词]')}</p>
+    // 引擎信息
+    const info = document.createElement('div');
+    info.className = 'engine-card-info';
+    info.innerHTML = `
+      <h4 class="engine-card-name">${engine.name}</h4>
+      <p class="engine-card-url">${engine.url.replace('%s', '[搜索词]').substring(0, 45)}${engine.url.length > 45 ? '...' : ''}</p>
     `;
 
-    engineInfo.appendChild(img);
-    engineInfo.appendChild(details);
+    // 操作按钮
+    const actions = document.createElement('div');
+    actions.className = 'engine-card-actions';
 
-    // 操作按钮区域
-    const actionsDiv = document.createElement('div');
-    actionsDiv.className = 'engine-actions';
+    // 启用/禁用开关
+    const toggle = document.createElement('div');
+    toggle.className = `engine-toggle ${config.enabled ? 'enabled' : ''}`;
+    toggle.title = config.enabled ? '点击禁用' : '点击启用';
+    toggle.onclick = () => this.toggleEngine(engine.id, !config.enabled);
+    actions.appendChild(toggle);
 
-    if (engine.isBuiltIn) {
-      // 内置引擎：启用/禁用按钮
-      const toggleBtn = document.createElement('button');
-      toggleBtn.className = 'toggle-btn';
-      toggleBtn.textContent = config.enabled ? '禁用' : '启用';
-      toggleBtn.className += config.enabled ? ' disable-btn' : ' enable-btn';
-      toggleBtn.onclick = () => this.toggleEngine(engine.id, !config.enabled);
-      actionsDiv.appendChild(toggleBtn);
-    } else {
-      // 自定义引擎：编辑和删除按钮
+    // 编辑按钮（仅自定义引擎）
+    if (!engine.isBuiltIn) {
       const editBtn = document.createElement('button');
-      editBtn.className = 'toggle-btn enable-btn';
-      editBtn.textContent = '编辑';
+      editBtn.className = 'engine-btn';
+      editBtn.title = '编辑';
+      editBtn.innerHTML = `
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
+          <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
+        </svg>
+      `;
       editBtn.onclick = () => this.startEdit(engine.id);
-      actionsDiv.appendChild(editBtn);
+      actions.appendChild(editBtn);
 
       const deleteBtn = document.createElement('button');
-      deleteBtn.className = 'toggle-btn disable-btn';
-      deleteBtn.textContent = '删除';
+      deleteBtn.className = 'engine-btn delete';
+      deleteBtn.title = '删除';
+      deleteBtn.innerHTML = `
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <polyline points="3 6 5 6 21 6"></polyline>
+          <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+        </svg>
+      `;
       deleteBtn.onclick = () => this.removeEngine(engine.id);
-      actionsDiv.appendChild(deleteBtn);
+      actions.appendChild(deleteBtn);
     }
 
-    item.appendChild(dragHandle);
-    item.appendChild(engineInfo);
-    item.appendChild(actionsDiv);
+    card.appendChild(orderNum);
+    card.appendChild(dragHandle);
+    card.appendChild(img);
+    card.appendChild(info);
+    card.appendChild(actions);
 
     // 绑定拖拽事件（仅启用的引擎可拖拽）
     if (config.enabled) {
-      item.addEventListener('dragstart', this.handleDragStart.bind(this));
-      item.addEventListener('dragover', this.handleDragOver.bind(this));
-      item.addEventListener('drop', this.handleDrop.bind(this));
-      item.addEventListener('dragend', this.handleDragEnd.bind(this));
+      card.addEventListener('dragstart', this.handleDragStart.bind(this));
+      card.addEventListener('dragenter', this.handleDragEnter.bind(this));
+      card.addEventListener('dragover', this.handleDragOver.bind(this));
+      card.addEventListener('dragleave', this.handleDragLeave.bind(this));
+      card.addEventListener('drop', this.handleDrop.bind(this));
+      card.addEventListener('dragend', this.handleDragEnd.bind(this));
     }
 
-    return item;
+    return card;
   }
 
   private handleDragStart(e: DragEvent): void {
@@ -196,17 +320,42 @@ class OptionsController {
     this.draggedKey = target.dataset.engineKey ?? null;
     target.classList.add('dragging');
     e.dataTransfer?.setData('text/plain', this.draggedKey ?? '');
+    e.dataTransfer!.effectAllowed = 'move';
+  }
+
+  private handleDragEnter(e: DragEvent): void {
+    e.preventDefault();
+    const target = (e.currentTarget as HTMLElement)?.closest('.engine-card') as HTMLElement;
+    if (!target || target.dataset.engineKey === this.draggedKey) return;
+    
+    // 添加悬停效果
+    target.style.borderColor = 'var(--color-primary)';
+    target.style.backgroundColor = 'var(--color-primary-light)';
   }
 
   private handleDragOver(e: DragEvent): void {
     e.preventDefault();
+    e.dataTransfer!.dropEffect = 'move';
+  }
+
+  private handleDragLeave(e: DragEvent): void {
+    const target = (e.currentTarget as HTMLElement)?.closest('.engine-card') as HTMLElement;
+    if (!target) return;
+    
+    // 移除悬停效果
+    target.style.borderColor = '';
+    target.style.backgroundColor = '';
   }
 
   private async handleDrop(e: DragEvent): Promise<void> {
     e.preventDefault();
     
-    const target = (e.currentTarget as HTMLElement)?.closest('.engine-item') as HTMLElement;
+    const target = (e.currentTarget as HTMLElement)?.closest('.engine-card') as HTMLElement;
     if (!target || !this.draggedKey) return;
+
+    // 清除悬停效果
+    target.style.borderColor = '';
+    target.style.backgroundColor = '';
 
     const targetKey = target.dataset.engineKey;
     if (!targetKey || targetKey === this.draggedKey) return;
@@ -225,6 +374,12 @@ class OptionsController {
     const target = e.currentTarget as HTMLElement;
     target.classList.remove('dragging');
     this.draggedKey = null;
+    
+    // 清除所有悬停效果
+    document.querySelectorAll('.engine-card').forEach(card => {
+      (card as HTMLElement).style.borderColor = '';
+      (card as HTMLElement).style.backgroundColor = '';
+    });
   }
 
   private async toggleEngine(id: string, enabled: boolean): Promise<void> {
@@ -273,7 +428,6 @@ class OptionsController {
 
     // 自动获取图标
     if (!icon) {
-      // 优先从 site: 过滤器提取域名（如 site:v2ex.com/t → v2ex.com）
       const siteDomain = extractSiteFilterDomain(url);
       if (siteDomain) {
         icon = getFaviconUrl(siteDomain);
@@ -285,7 +439,6 @@ class OptionsController {
 
     try {
       if (this.editingEngineId) {
-        // 编辑模式：更新现有引擎
         await this.manager.updateEngine(this.editingEngineId, {
           name,
           url,
@@ -294,7 +447,6 @@ class OptionsController {
         });
         this.showStatus('搜索引擎已更新');
       } else {
-        // 添加模式：添加新引擎
         await this.manager.addCustomEngine({
           name,
           url,
@@ -304,8 +456,7 @@ class OptionsController {
         this.showStatus('搜索引擎已添加');
       }
 
-      // 清空表单并退出编辑模式
-      this.cancelEdit();
+      this.closeModal();
       this.renderEngines();
     } catch (error) {
       if (error instanceof Error && error.message.includes('already exists')) {
@@ -323,49 +474,40 @@ class OptionsController {
 
     this.editingEngineId = engineId;
 
-    // 填充表单
     const nameInput = document.getElementById('engine-name') as HTMLInputElement;
     const urlInput = document.getElementById('engine-url') as HTMLInputElement;
     const paramInput = document.getElementById('engine-param') as HTMLInputElement;
     const iconInput = document.getElementById('engine-icon') as HTMLInputElement;
-    const formTitle = document.getElementById('form-title');
+    const modalTitle = document.getElementById('modal-title');
     const submitBtn = document.getElementById('add-engine-btn');
-    const cancelBtn = document.getElementById('cancel-edit-btn');
 
     nameInput.value = engine.name;
     urlInput.value = engine.url;
     paramInput.value = engine.searchParam;
     iconInput.value = engine.icon || '';
 
-    if (formTitle) formTitle.textContent = '编辑搜索引擎';
-    if (submitBtn) submitBtn.textContent = '保存修改';
-    if (cancelBtn) cancelBtn.style.display = 'inline-block';
+    if (modalTitle) modalTitle.textContent = '编辑搜索引擎';
+    if (submitBtn) submitBtn.textContent = '保存';
 
-    // 滚动到表单区域
-    nameInput.scrollIntoView({ behavior: 'smooth', block: 'center' });
-    nameInput.focus();
+    document.getElementById('engine-modal')?.classList.add('active');
+    document.body.style.overflow = 'hidden';
   }
 
-  private cancelEdit(): void {
-    this.editingEngineId = null;
-
-    // 清空表单
+  private resetForm(): void {
     const nameInput = document.getElementById('engine-name') as HTMLInputElement;
     const urlInput = document.getElementById('engine-url') as HTMLInputElement;
     const paramInput = document.getElementById('engine-param') as HTMLInputElement;
     const iconInput = document.getElementById('engine-icon') as HTMLInputElement;
-    const formTitle = document.getElementById('form-title');
-    const submitBtn = document.getElementById('add-engine-btn');
-    const cancelBtn = document.getElementById('cancel-edit-btn');
 
     nameInput.value = '';
     urlInput.value = '';
     paramInput.value = '';
     iconInput.value = '';
+  }
 
-    if (formTitle) formTitle.textContent = '添加搜索引擎';
-    if (submitBtn) submitBtn.textContent = '添加搜索引擎';
-    if (cancelBtn) cancelBtn.style.display = 'none';
+  private cancelEdit(): void {
+    this.editingEngineId = null;
+    this.resetForm();
   }
 
   private async resetSettings(): Promise<void> {
