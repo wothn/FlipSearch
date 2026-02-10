@@ -436,6 +436,26 @@ export class EngineManager {
   }
 
   /**
+   * 获取搜索引擎主页 URL
+   */
+  getHomepageUrl(engineId: string): string {
+    this.checkInitialized();
+
+    const engine = this.engines.get(engineId);
+    if (!engine) {
+      throw new Error(`Engine ${engineId} not found`);
+    }
+
+    try {
+      const urlObj = new URL(engine.url);
+      return `${urlObj.protocol}//${urlObj.host}`;
+    } catch (e) {
+      console.error('解析URL失败:', e);
+      return engine.url.split('?')[0];
+    }
+  }
+
+  /**
    * 检查初始化状态
    */
   private checkInitialized(): void {

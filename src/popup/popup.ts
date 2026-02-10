@@ -116,14 +116,15 @@ class PopupController {
   }
 
   private async handleEngineClick(engine: SearchEngine): Promise<void> {
-    if (!this.currentQuery) return;
-
-    const searchUrl = this.manager.buildSearchUrl(engine.id, this.currentQuery);
+    // 如果没有搜索词，跳转到搜索引擎主页
+    const targetUrl = this.currentQuery
+      ? this.manager.buildSearchUrl(engine.id, this.currentQuery)
+      : this.manager.getHomepageUrl(engine.id);
 
     if (this.openInNewTab) {
-      await chrome.tabs.create({ url: searchUrl });
+      await chrome.tabs.create({ url: targetUrl });
     } else {
-      await chrome.tabs.update({ url: searchUrl });
+      await chrome.tabs.update({ url: targetUrl });
       window.close();
     }
   }
